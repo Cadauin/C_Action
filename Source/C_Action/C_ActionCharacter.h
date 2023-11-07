@@ -77,6 +77,9 @@ public:
 	
 	FORCEINLINE void SetOverLappingItem(AItem* Item) { OverLappingItem = Item; };
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; };
+	
+	UFUNCTION(BlueprintCallable)
+		void SetWeaponCollision(ECollisionEnabled::Type CollisionEnable);
 protected:
 
 	/** Called for movement input */
@@ -101,7 +104,7 @@ protected:
 
 	bool CanAttack();
 
-	void PlayEquipMontage(FName SelectionName);
+	void PlayEquipMontage(const FName& SelectionName);
 
 	bool CanDisarm();
 

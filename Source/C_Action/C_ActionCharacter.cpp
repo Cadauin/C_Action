@@ -14,6 +14,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
+#include "Components/BoxComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -65,6 +66,7 @@ AC_ActionCharacter::AC_ActionCharacter()
 
 
 
+
 void AC_ActionCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -80,7 +82,15 @@ void AC_ActionCharacter::BeginPlay()
 	}
 }
 
-
+void AC_ActionCharacter::SetWeaponCollision(ECollisionEnabled::Type CollisionEnable)
+{
+	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+	{
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnable);
+		EquippedWeapon->IgnoreActor.Empty();
+		
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -160,7 +170,7 @@ void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 
 		if (CanDisarm())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("UnEquip"));
+			
 			PlayEquipMontage(FName("UnEquip"));
 			ActionState = EActionState::EAS_EquippingWeapon;
 			CharacterState = ECharacterState::ECS_UnEquip;
@@ -168,7 +178,7 @@ void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 		}
 		else if (Canarm()) 
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Equip"));
+			
 			PlayEquipMontage(FName("Equip"));
 			ActionState = EActionState::EAS_EquippingWeapon;
 			CharacterState = ECharacterState::ECS_EquippedOneHandWeapon;
@@ -197,11 +207,11 @@ void AC_ActionCharacter::PlayAttackMontage()
 		{
 		case 0:
 			SelectionName = FName("Attack1");
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SelectionName,%s"), *SelectionName.ToString()));
+			
 			break;
 		case 1:
 			SelectionName = FName("Attack2");
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SelectionName,%s"), *SelectionName.ToString()));
+			
 			break;
 		default:
 			break;
@@ -223,7 +233,7 @@ bool AC_ActionCharacter::CanAttack()
 		CharacterState != ECharacterState::ECS_UnEquip;
 }
 
-void AC_ActionCharacter::PlayEquipMontage(FName SelectionName)
+void AC_ActionCharacter::PlayEquipMontage(const FName& SelectionName)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance&&EquipMontage) {
