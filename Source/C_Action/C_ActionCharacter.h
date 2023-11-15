@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+
+
+#include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Characters/CharacterTypes.h"
 #include "C_ActionCharacter.generated.h"
@@ -16,10 +17,10 @@
 	class UGroomComponent;
 	class AItem;
 	class UAnimMontage;
-	class AWeapon;
+
 
 UCLASS(config=Game)
-class AC_ActionCharacter : public ACharacter
+class AC_ActionCharacter : public ABaseCharacter
 {
 	
 	GENERATED_BODY()
@@ -64,24 +65,21 @@ class AC_ActionCharacter : public ACharacter
 	/*
 	*Montages
 	*/
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
-		UAnimMontage* AttackMontage;
+
 
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 		UAnimMontage* EquipMontage;
 
-	UPROPERTY(VisibleAnyWhere, Category = "Weapon")
-		AWeapon* EquippedWeapon;
+
 public:
 	AC_ActionCharacter();
 	
 	FORCEINLINE void SetOverLappingItem(AItem* Item) { OverLappingItem = Item; };
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; };
 	
-	UFUNCTION(BlueprintCallable)
-		void SetWeaponCollision(ECollisionEnabled::Type CollisionEnable);
-protected:
 
+protected:
+	virtual void BeginPlay();
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -90,38 +88,40 @@ protected:
 			
 	void EKeyPressed(const FInputActionValue& Value);
 
-	void Attacked(const FInputActionValue& value);
+	void Attacked(const FInputActionValue& value) ;
+
+	void EquipWeapon(AWeapon* Weapon);
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	/*
 	*Play Montage Funtions
 	*/
-	void PlayAttackMontage();
 
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	virtual void AttackEnd() override;
 
-	bool CanAttack();
+	virtual bool CanAttack() override;
 
 	void PlayEquipMontage(const FName& SelectionName);
 
 	bool CanDisarm();
-
-	bool Canarm();
-
-	UFUNCTION(BlueprintCallable)
 	void Disarm();
 
+	bool Canarm();
+	void Arm();
+
 	UFUNCTION(BlueprintCallable)
-	void EquipAgain();
+	void AttachWeaponToBack();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToHand();
 
 	UFUNCTION(BlueprintCallable)
 		void FinishEquipping();
 
 	
 	// To add mapping context
-	virtual void BeginPlay();
+	
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquip;
 

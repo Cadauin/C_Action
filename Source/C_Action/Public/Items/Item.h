@@ -7,6 +7,7 @@
 #include "Item.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
 enum class EItemState :uint8 {
 	EIS_Hovering,
 	EIS_Equiped
@@ -31,7 +32,13 @@ public:
 		USphereComponent* Sphere;
 
 
+	virtual void Tick(float DeltaTime) override;
+
+
 	EItemState ItemState = EItemState::EIS_Hovering;
+
+	UPROPERTY(Editanywhere, category = "Niagara")
+		UNiagaraComponent* EmberEffect;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -42,8 +49,6 @@ protected:
 	UFUNCTION()
 		virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
 
 };

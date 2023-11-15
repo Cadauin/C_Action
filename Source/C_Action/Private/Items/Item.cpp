@@ -4,7 +4,7 @@
 #include "Items/Item.h"
 #include "Components/SphereComponent.h"
 #include "C_Action/C_ActionCharacter.h"
-
+#include "NiagaraComponent.h"
 // Sets default values
 AItem::AItem()
 {
@@ -12,10 +12,15 @@ AItem::AItem()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	ItemMesh=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
+	ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = ItemMesh;
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
+
+	EmberEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmberEffect"));
+	EmberEffect->SetupAttachment(GetRootComponent());
 }
 
 

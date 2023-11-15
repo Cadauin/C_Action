@@ -14,7 +14,6 @@
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
-#include "Components/BoxComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -64,9 +63,6 @@ AC_ActionCharacter::AC_ActionCharacter()
 
 }
 
-
-
-
 void AC_ActionCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -80,20 +76,8 @@ void AC_ActionCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+	Tags.Add(FName("SlashCharacter"));
 }
-
-void AC_ActionCharacter::SetWeaponCollision(ECollisionEnabled::Type CollisionEnable)
-{
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
-	{
-		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnable);
-		EquippedWeapon->IgnoreActor.Empty();
-		
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Input
 
 void AC_ActionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -116,6 +100,7 @@ void AC_ActionCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	}
 
 }
+
 void AC_ActionCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -155,33 +140,26 @@ void AC_ActionCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+
+
+
 void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverLappingItem);
 	if (OverlappingWeapon)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"));
-		CharacterState = ECharacterState::ECS_EquippedOneHandWeapon;
-		OverLappingItem = nullptr;
-		EquippedWeapon = OverlappingWeapon;
+		EquipWeapon(OverlappingWeapon);
 	}
 	else
 	{
 
 		if (CanDisarm())
 		{
-			
-			PlayEquipMontage(FName("UnEquip"));
-			ActionState = EActionState::EAS_EquippingWeapon;
-			CharacterState = ECharacterState::ECS_UnEquip;
-
+			Disarm();
 		}
 		else if (Canarm()) 
 		{
-			
-			PlayEquipMontage(FName("Equip"));
-			ActionState = EActionState::EAS_EquippingWeapon;
-			CharacterState = ECharacterState::ECS_EquippedOneHandWeapon;
+			Arm();
 		}
 	}
 }
@@ -195,32 +173,15 @@ void AC_ActionCharacter::Attacked(const FInputActionValue& value)
 	}
 	
 }
-void AC_ActionCharacter::PlayAttackMontage()
+
+void AC_ActionCharacter::EquipWeapon(AWeapon* Weapon)
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage)
-	{
-		AnimInstance->Montage_Play(AttackMontage);
-		const int32 Selection = FMath::RandRange(0, 1);
-		FName SelectionName = FName();
-		switch (Selection)
-		{
-		case 0:
-			SelectionName = FName("Attack1");
-			
-			break;
-		case 1:
-			SelectionName = FName("Attack2");
-			
-			break;
-		default:
-			break;
-		}
-
-		AnimInstance->Montage_JumpToSection(SelectionName, AttackMontage);
-	}
-
+	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+	CharacterState = ECharacterState::ECS_EquippedOneHandWeapon;
+	OverLappingItem = nullptr;
+	EquippedWeapon = Weapon;
 }
+
 
 void AC_ActionCharacter::AttackEnd()
 {
@@ -249,6 +210,13 @@ bool AC_ActionCharacter::CanDisarm()
 		CharacterState != ECharacterState::ECS_UnEquip;
 }
 
+void AC_ActionCharacter::Disarm()
+{
+	PlayEquipMontage(FName("UnEquip"));
+	ActionState = EActionState::EAS_EquippingWeapon;
+	CharacterState = ECharacterState::ECS_UnEquip;
+}
+
 bool AC_ActionCharacter::Canarm()
 {
 	return ActionState == EActionState::EAS_Unoccupied &&
@@ -256,20 +224,25 @@ bool AC_ActionCharacter::Canarm()
 		EquippedWeapon;
 }
 
-void AC_ActionCharacter::Disarm()
+void AC_ActionCharacter::Arm()
+{
+	PlayEquipMontage(FName("Equip"));
+	ActionState = EActionState::EAS_EquippingWeapon;
+	CharacterState = ECharacterState::ECS_EquippedOneHandWeapon;
+}
+
+void AC_ActionCharacter::AttachWeaponToBack()
 {
 	if (EquippedWeapon)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Disarm"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
 	}
 }
 
-void AC_ActionCharacter::EquipAgain()
+void AC_ActionCharacter::AttachWeaponToHand()
 {
 	if (EquippedWeapon)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("EquipAgain"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
 	}
 }

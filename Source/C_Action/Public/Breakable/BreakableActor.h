@@ -9,6 +9,7 @@
 
 
 class UGeometryCollectionComponent;
+class UCapsuleComponent;
 UCLASS()
 class C_ACTION_API ABreakableActor : public AActor ,public IHitInterfaces
 {
@@ -24,9 +25,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(Visibleanywhere,BlueprintReadWrite)
+		UCapsuleComponent* Capsule;
+
 private:
+	bool bBroken = false;
+
 	UPROPERTY(Visibleanywhere)
 	UGeometryCollectionComponent* GeometryCollection;
 	
-
+	UPROPERTY(Editanywhere,category="Breakable Properties")
+	TArray<TSubclassOf<class ATreasure>> TreasureClass;
 };

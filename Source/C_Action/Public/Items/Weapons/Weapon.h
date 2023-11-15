@@ -8,6 +8,7 @@
 
 class USoundBase;
 class UBoxComponent;
+class UNiagaraComponent;
 /**
  * 
  */
@@ -18,7 +19,7 @@ class C_ACTION_API AWeapon : public AItem
 
 public:
 	AWeapon();
-	void Equip(USceneComponent* InParent, FName InsocketName);
+	void Equip(USceneComponent* InParent, FName InsocketName, AActor* NewOwner ,APawn* NewInstigator);
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InsocketName);
 
 	TArray<AActor*> IgnoreActor;
@@ -42,10 +43,15 @@ private:
 	UPROPERTY(EditAnyWhere, Category = "Weapon Properties")
 		UBoxComponent* WeaponBox;
 
+	UPROPERTY(EditAnyWhere, Category = "Weapon Properties")
+		float Damage=20.f;
+
 	UPROPERTY(EditAnyWhere)
 		USceneComponent* BoxTraceStart;
 
 	UPROPERTY(EditAnyWhere)
 		USceneComponent* BoxTraceEnd;
+
+
 
 };
