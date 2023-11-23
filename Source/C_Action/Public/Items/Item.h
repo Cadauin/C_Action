@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UNiagaraComponent;
+class UNiagaraSystem;
 enum class EItemState :uint8 {
 	EIS_Hovering,
 	EIS_Equiped
@@ -38,10 +39,12 @@ public:
 	EItemState ItemState = EItemState::EIS_Hovering;
 
 	UPROPERTY(Editanywhere, category = "Niagara")
-		UNiagaraComponent* EmberEffect;
+		UNiagaraComponent* ItemEffect;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void SpawnPickUpsystem();
+	virtual void SpawnPickSound();
 
 	UFUNCTION()
 		virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -49,6 +52,25 @@ protected:
 	UFUNCTION()
 		virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION(BlueprintPure)
+		float TransformedSin();
 
+	UFUNCTION(BlueprintPure)
+		float TransformedCos();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exposed | Sine Parameters")
+		float Amplitude = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exposed | Sine Parameters")
+		float TimeConstant = 5.f;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Exposed | Info")
+		float RunningTime = 0.f;
+
+	UPROPERTY(Editanywhere, Category = "Effect")
+		UNiagaraSystem* PickUpEffect;
+
+	UPROPERTY(Editanywhere, Category = "Effect")
+		USoundBase* PickUpSound;
 };

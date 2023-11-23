@@ -4,12 +4,15 @@
 #include "Items/Item.h"
 #include "Components/SphereComponent.h"
 #include "C_Action/C_ActionCharacter.h"
+#include "Interfaces/PickUpInterface.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 // Sets default values
 AItem::AItem()
 {
 
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	ItemMesh=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
 	ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -19,8 +22,8 @@ AItem::AItem()
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
 
-	EmberEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmberEffect"));
-	EmberEffect->SetupAttachment(GetRootComponent());
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmberEffect"));
+	ItemEffect->SetupAttachment(GetRootComponent());
 }
 
 
@@ -33,22 +36,36 @@ void AItem::BeginPlay()
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
 	
 }
+void AItem::SpawnPickUpsystem()
+{
+	if (PickUpEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickUpEffect, GetActorLocation());
+	}
+}
+void AItem::SpawnPickSound()
+{
+	if (PickUpSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, PickUpSound, GetActorLocation());
+	}
+}
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AC_ActionCharacter* SlashCharacter = Cast<AC_ActionCharacter>(OtherActor);
+	IPickUpInterface* HitInterface = Cast<IPickUpInterface>(OtherActor);
 
-	if (SlashCharacter)
+	if (HitInterface)
 	{
-		SlashCharacter->SetOverLappingItem(this);
+		HitInterface->SetOverLappingItem(this);
 	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	AC_ActionCharacter* SlashCharacter = Cast<AC_ActionCharacter>(OtherActor);
-	if (SlashCharacter)
+	IPickUpInterface* HitInterface = Cast<IPickUpInterface>(OtherActor);
+	if (HitInterface)
 	{
-		SlashCharacter->SetOverLappingItem(nullptr);
+		HitInterface->SetOverLappingItem(nullptr);
 	}
 }
 
@@ -57,9 +74,20 @@ void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	RunningTime += DeltaTime;
+
 	if (ItemState == EItemState::EIS_Hovering)
 	{
-		return;
+		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
 	}
+}
+float AItem::TransformedSin()
+{
+	return Amplitude * FMath::Sin(RunningTime * TimeConstant);
+}
+
+float AItem::TransformedCos()
+{
+	return Amplitude * FMath::Cos(RunningTime * TimeConstant);
 }
 

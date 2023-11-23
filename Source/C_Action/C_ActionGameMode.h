@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "C_ActionGameMode.generated.h"
-
+class USlashHUD;
 UCLASS(minimalapi)
 class AC_ActionGameMode : public AGameModeBase
 {
@@ -13,6 +13,7 @@ class AC_ActionGameMode : public AGameModeBase
 
 public:
 	AC_ActionGameMode();
+
 };
 
 

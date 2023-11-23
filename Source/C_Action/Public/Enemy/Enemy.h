@@ -28,11 +28,11 @@ protected:
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
 	void SpawnDefaultWeapon();
+	class UMotionWarpingComponent* MotionWarping;
 
-	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<EDeathPose> DeathPose ;
 	 
 	virtual void Die() override;
+	void SpawnSoul();
 	bool IntargetRange(AActor* target,double Radius);
 
 	UPROPERTY(Editanywhere, category = "Combat")
@@ -51,11 +51,12 @@ protected:
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
-	virtual int32 PlayDeathMontage() override;
 	virtual void AttackEnd()override;
 
 	UPROPERTY(BlueprintReadOnly)
 		EEenemyState EnemyState = EEenemyState::EES_Patrolling;
+
+
 private:
 	/*
 	Components
@@ -69,15 +70,16 @@ private:
 	UPROPERTY(EditAnyWhere)
 		TSubclassOf<class AWeapon> WeaponClass;
 
-	UPROPERTY()
-		AActor* CombatTarget;
+
 
 	UPROPERTY(Editanywhere, category = "Combat")
 		double CombatRadius=500.f;
 
 	UPROPERTY(EditAnyWhere, Category = "Combat")
 		double AttackRadius = 150.f;
-
+	
+	UPROPERTY(EditAnyWhere, Category = "Combat")
+		TSubclassOf<class ASoul> SoulClass;
 	/*
 	Navigation
 	*/
@@ -141,7 +143,7 @@ public:
 	void CheckCombatTarget();
 
 	
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 	
 

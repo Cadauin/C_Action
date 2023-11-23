@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterfaces.h"
 #include "Components/AttributeComponent.h"
+#include "Characters/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
 class AWeapon;
@@ -26,18 +27,23 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollision(ECollisionEnabled::Type CollisionEnable);
+	
+	FORCEINLINE TEnumAsByte<EDeathPose> GetDeadPose() const { return DeathPose; }
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void Attack();
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)override;
 	virtual bool CanAttack();
 	bool IsAlive();
+
 
 
 	UFUNCTION(BlueprintCallable)
 	virtual	void AttackEnd();
 
 	virtual void Die();
+	void DisableCollision();
 	/*
 	Components
 	*/
@@ -45,12 +51,14 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 		UAttributeComponent* Attributes;
 
-	UPROPERTY(Editanywhere, category = "Sounds")
+	UPROPERTY(Editanywhere, category = "Combat")
 		USoundBase* HitSound;
 
-	UPROPERTY(Editanywhere, category = "VisualEffect")
+	UPROPERTY(Editanywhere, category = "Combat")
 		UParticleSystem* HitParticles;
 
+	UPROPERTY(BlueprintReadOnly)
+		TEnumAsByte<EDeathPose> DeathPose;
 /*
 *Play Montage Funtions
 */
@@ -66,8 +74,14 @@ protected:
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SelectionNames);
 	virtual	int32 PlayAttackMontage();
 	virtual	int32 PlayDeathMontage();
+	void StopAttackMontage();
 	void DisableCapsule();
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+		AActor* CombatTarget;
+
+	UPROPERTY(Editanywhere, category = "Combat")
+		double WarpTargetDistance = 75.f;
 	
 	UPROPERTY(Editanywhere, category = "Combat")
 		float DeathLifeSpan = 8.f;
@@ -75,15 +89,15 @@ protected:
 	UPROPERTY(VisibleAnyWhere, Category = "Weapon")
 		AWeapon* EquippedWeapon;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* AttackMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* DeathMontage;
 
 	
 
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* HitReactMontage;
 
 	UPROPERTY(Editanywhere, Category = "Combat")
@@ -91,4 +105,10 @@ protected:
 
 	UPROPERTY(Editanywhere, Category = "Combat")
 		TArray<FName> DeathMontageSelections;
+
+	UFUNCTION(BlueprintCallable)
+		FVector GetTranslationWarpTarget();
+
+	UFUNCTION(BlueprintCallable)
+		FVector GetRotationWarpTarget();
 };

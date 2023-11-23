@@ -30,6 +30,8 @@ Super:: NativeUpdateAnimation(Deltatime);
 
 		IsFalling = SlashCharacterMovement->IsFalling();
 		CharacterState = SlashCharacter->GetCharacterState();
+		ActionState = SlashCharacter->GetActionState();
+		DeathPose = SlashCharacter->GetDeadPose();
 	}
 
 }

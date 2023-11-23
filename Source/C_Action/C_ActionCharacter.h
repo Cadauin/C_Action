@@ -7,7 +7,9 @@
 #include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Characters/CharacterTypes.h"
+#include "Interfaces/PickUpInterface.h"
 #include "C_ActionCharacter.generated.h"
+
 
 
 	class USpringArmComponent;
@@ -16,11 +18,14 @@
 	class UInputAction;
 	class UGroomComponent;
 	class AItem;
+	class ATreasure;
+	class ASoul;
 	class UAnimMontage;
+	class USlashOverlay;
 
 
 UCLASS(config=Game)
-class AC_ActionCharacter : public ABaseCharacter
+class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 {
 	
 	GENERATED_BODY()
@@ -54,6 +59,9 @@ class AC_ActionCharacter : public ABaseCharacter
 	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
 		UInputAction* Attack;
 
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* Dodge;
+
 	UPROPERTY(VisibleAnyWhere, Category = "Groom")
 		UGroomComponent* Hair;
 
@@ -70,16 +78,27 @@ class AC_ActionCharacter : public ABaseCharacter
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 		UAnimMontage* EquipMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+		UAnimMontage* DodgeMontage;
+
 
 public:
 	AC_ActionCharacter();
 	
-	FORCEINLINE void SetOverLappingItem(AItem* Item) { OverLappingItem = Item; };
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; };
 	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
 
+	virtual void Jump() override;
+	virtual void Die() override;
+	virtual void SetOverLappingItem(AItem* Item)override;
+	virtual void AddSouls(ASoul* Soul)override;
+	virtual void AddGold(ATreasure* Treasure)override;
 protected:
+
 	virtual void BeginPlay();
+	
+	virtual void Tick(float DeltaTime)override;
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -89,11 +108,20 @@ protected:
 	void EKeyPressed(const FInputActionValue& Value);
 
 	void Attacked(const FInputActionValue& value) ;
+	
+	void Dodged(const FInputActionValue& value);
+
+	bool HasEnoughStamina();
+
+	bool IsOccupied();
 
 	void EquipWeapon(AWeapon* Weapon);
+
+	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	/*
 	*Play Montage Funtions
 	*/
@@ -119,6 +147,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void FinishEquipping();
 
+	UFUNCTION(BlueprintCallable)
+		void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+		void DodgeEnd();
+
 	
 	// To add mapping context
 	
@@ -129,10 +163,16 @@ private:
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	
 
+	void InitializeSlashOverlay();
+	UPROPERTY()
+		USlashOverlay* SlashOverlay;
+	void SetHealthHUD();
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 };
 

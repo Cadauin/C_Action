@@ -4,25 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "HitInterfaces.generated.h"
+#include "PickUpInterface.generated.h"
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UHitInterfaces : public UInterface
+class UPickUpInterface : public UInterface
 {
 	GENERATED_BODY()
 };
-
 /**
  * 
  */
-class C_ACTION_API IHitInterfaces
+class C_ACTION_API IPickUpInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-
-	UFUNCTION(BlueprintNativeEvent)
-	 void GetHit(const FVector& ImpactPoint,AActor* Hitter) ;
+	virtual void SetOverLappingItem(class AItem* Item) ;
+	virtual void AddSouls(class ASoul* Soul);
+	virtual void AddGold(class ATreasure* Treasure);
 };
