@@ -91,9 +91,9 @@ void AC_ActionCharacter::Jump()
 	}
 }
 
-void AC_ActionCharacter::Die()
+void AC_ActionCharacter::Die_Implementation()
 {
-	Super::Die();
+	Super::Die_Implementation();
 	ActionState = EActionState::EAS_Dead;
 }
 
@@ -257,6 +257,10 @@ void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverLappingItem);
 	if (OverlappingWeapon)
 	{
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->Destroy();
+		}
 		EquipWeapon(OverlappingWeapon);
 	}
 	else

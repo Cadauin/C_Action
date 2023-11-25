@@ -42,7 +42,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual	void AttackEnd();
 
-	virtual void Die();
+	UFUNCTION(BlueprintNativeEvent)
+	void Die();
+
 	void DisableCollision();
 	/*
 	Components

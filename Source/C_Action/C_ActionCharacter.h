@@ -90,7 +90,7 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
 
 	virtual void Jump() override;
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	virtual void SetOverLappingItem(AItem* Item)override;
 	virtual void AddSouls(ASoul* Soul)override;
 	virtual void AddGold(ATreasure* Treasure)override;

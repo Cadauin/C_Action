@@ -31,7 +31,7 @@ protected:
 	class UMotionWarpingComponent* MotionWarping;
 
 	 
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	void SpawnSoul();
 	bool IntargetRange(AActor* target,double Radius);
 
@@ -77,6 +77,9 @@ private:
 
 	UPROPERTY(EditAnyWhere, Category = "Combat")
 		double AttackRadius = 150.f;
+
+	UPROPERTY(EditAnyWhere, Category = "Combat")
+		double AcceptanceRadius = 150.f;
 	
 	UPROPERTY(EditAnyWhere, Category = "Combat")
 		TSubclassOf<class ASoul> SoulClass;
