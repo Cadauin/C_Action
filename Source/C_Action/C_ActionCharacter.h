@@ -82,6 +82,15 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 		UAnimMontage* DodgeMontage;
 
 
+	/*
+	Assassin
+	*/
+	UPROPERTY(Editanywhere, Category = "Assassin")
+		float AssassinDistance =150.f;
+
+
+
+
 public:
 	AC_ActionCharacter();
 	
@@ -94,6 +103,15 @@ public:
 	virtual void SetOverLappingItem(AItem* Item)override;
 	virtual void AddSouls(ASoul* Soul)override;
 	virtual void AddGold(ATreasure* Treasure)override;
+
+	/*Assassin*/
+	UPROPERTY(BlueprintReadOnly)
+	class AEnemy* AssassinTarget;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector AssassinLocation;
+	UPROPERTY(BlueprintReadOnly)
+	FRotator AssassinRotation;
 protected:
 
 	virtual void BeginPlay();
@@ -110,6 +128,8 @@ protected:
 	void Attacked(const FInputActionValue& value) ;
 	
 	void Dodged(const FInputActionValue& value);
+
+	void SetCollisionIgnore();
 
 	bool HasEnoughStamina();
 
@@ -138,6 +158,8 @@ protected:
 	bool Canarm();
 	void Arm();
 
+	bool AssassinBack(AActor& Actor);
+
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
 
@@ -152,6 +174,11 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void DodgeEnd();
+
+	void ResetMeshCollision();
+
+	UFUNCTION(BlueprintCallable)
+		void AssassinEnd();
 
 	
 	// To add mapping context

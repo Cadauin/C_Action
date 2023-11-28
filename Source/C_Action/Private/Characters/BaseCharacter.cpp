@@ -13,6 +13,7 @@
 
 
 
+
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -53,6 +54,13 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 	}
 	PlayHitSound(ImpactPoint);
 	SpawnParticles(ImpactPoint);
+}
+
+void ABaseCharacter::Assassinated_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	FVector Location = Hitter->GetActorLocation();
+	FRotator Rotation = Hitter->GetActorRotation();
+
 }
 
 bool ABaseCharacter::CanAttack()
@@ -130,6 +138,8 @@ FVector ABaseCharacter::GetRotationWarpTarget()
 	}
 	return FVector();
 }
+
+
 
 void ABaseCharacter::SetWeaponCollision(ECollisionEnabled::Type CollisionEnable)
 {

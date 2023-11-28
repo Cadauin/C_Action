@@ -23,6 +23,23 @@ public:
 	// Sets default values for this character's properties
 	AEnemy();
 
+	UPROPERTY(EditAnywhere, Category = "Enemy")
+		EEenemyState EnemyState = EEenemyState::EES_Patrolling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy")
+		EEnemyType EnemyType;
+
+	/*
+	AssassinSkeletalMesh
+	*/
+	UPROPERTY(Editanywhere, category = "Assassin")
+		USkeletalMeshComponent* AssassinSkeletalMesh;
+	/*AssassinWarp*/
+	UFUNCTION(BlueprintCallable)
+		FVector GetTranslationWarpTargetAssassin();
+
+	UFUNCTION(BlueprintCallable)
+		FRotator GetRotationWarpTargetAssassin();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -47,14 +64,17 @@ protected:
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
 
+
 	
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AttackEnd()override;
 
-	UPROPERTY(BlueprintReadOnly)
-		EEenemyState EnemyState = EEenemyState::EES_Patrolling;
+	
+	UFUNCTION(BlueprintCallable)
+		void Assassin_End();
+
 
 
 private:
@@ -95,6 +115,7 @@ private:
 	UPROPERTY()
 		AAIController* EnemyController;
 
+
 	UPROPERTY(EditanyWhere, category = "AI Navigation")
 		float PatrolWaitMax=10.f;
 	UPROPERTY(EditanyWhere, category = "AI Navigation")
@@ -115,6 +136,7 @@ private:
 	bool IsAttacking();
 	bool IsDead();
 	bool IsEngage();
+	bool IsAssassinated();
 	void ClearPatrolTime();
 
 	/*
@@ -148,7 +170,7 @@ public:
 	
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
-	
+	virtual void Assassinated_Implementation(const FVector& ImpactPoint, AActor* Hitter)override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
 

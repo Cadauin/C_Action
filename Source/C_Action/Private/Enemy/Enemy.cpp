@@ -21,8 +21,6 @@ AEnemy::AEnemy()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECR_Block);
 	GetMesh()->SetGenerateOverlapEvents(true);
-	
-	
 
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBar"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
@@ -35,7 +33,11 @@ AEnemy::AEnemy()
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	PawnSensing->SightRadius = 4000.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
+
+	AssassinSkeletalMesh=CreateAbstractDefaultSubobject<USkeletalMeshComponent>(TEXT("AssassinSkeletalMesh"));
+	AssassinSkeletalMesh->SetupAttachment(GetRootComponent());
 }
+
 
 // Called when the game starts or when spawned
 void AEnemy::BeginPlay()
@@ -52,6 +54,7 @@ void AEnemy::BeginPlay()
 
 void AEnemy::InitializeEnemy()
 {	EnemyController = Cast<AAIController>(GetController());
+	
 	MoveToTarget(PatrolTarget);
 	HideHealthBar();
 	
@@ -203,9 +206,27 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 	SetWeaponCollision(ECollisionEnabled::NoCollision);
 	StopAttackMontage();
 
-	if (IsInsideAttackRadius() && !IsDead())
+	if (IsInsideAttackRadius() && !IsDead()&&!IsAssassinated())
 	{
 		StarAttackTimer();
+	}
+}
+
+void AEnemy::Assassinated_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	Super::Assassinated_Implementation(ImpactPoint,Hitter);
+	if (!IsDead()&&AssassinatedMontage) { 
+		EnemyState = EEenemyState::EES_Assassinated;
+
+		AcceptanceRadius = 9999999.f;
+		MoveToTarget(GetOwner());
+		
+		PawnSensing->SightRadius = 0.f;
+		PatrolTarget = NULL;
+		PatrolTargets.Reset();
+		
+		DisableCapsule();
+		PlayMontageSection(AssassinatedMontage, FName("Assassin"));
 	}
 }
 
@@ -272,6 +293,11 @@ bool AEnemy::IsEngage()
 	return EnemyState == EEenemyState::EES_Engaged;
 }
 
+bool AEnemy::IsAssassinated()
+{
+	return EnemyState==EEenemyState::EES_Assassinated;
+}
+
 bool AEnemy::IntargetRange(AActor* target, double Radius)
 {
 	if (target == nullptr){return false;}
@@ -286,7 +312,10 @@ void AEnemy::PatrolTimerFinished()
 
 void AEnemy::MoveToTarget(AActor* Target)
 {
-	if (EnemyController == nullptr || Target == nullptr){return;}
+	if (EnemyController == nullptr || Target == nullptr)
+	{
+		return;
+	}
 		FAIMoveRequest MoveRequest;
 		MoveRequest.SetGoalActor(Target);
 		MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
@@ -324,8 +353,9 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 {
 
 	const bool bShouldChaseTarget =
-		EnemyState != EEenemyState::EES_Dead &&
-		EnemyState != EEenemyState::EES_Chasing &&
+		!IsDead() &&
+		!IsChaseing() &&
+		!IsAssassinated() &&
 		EnemyState < EEenemyState::EES_Attacking &&
 		SeenPawn->ActorHasTag("EngageableTarget");
 
@@ -334,6 +364,20 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		ClearPatrolTime();
 		ChaseTarget();
 	}
+}
+
+void AEnemy::Assassin_End()
+{
+	EnemyState = EEenemyState::EES_Dead;
+
+	ClearAttackTimer();
+	HideHealthBar();
+	DisableCapsule();
+	SetLifeSpan(DeathLifeSpan);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	SetWeaponCollision(ECollisionEnabled::NoCollision);
+	SpawnSoul();
+
 }
 
 void AEnemy::Attack()
@@ -368,6 +412,26 @@ void AEnemy::HandleDamage(float DamageAmount)
 	{
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 	}
+}
+
+FVector AEnemy::GetTranslationWarpTargetAssassin()
+{
+	if (AssassinSkeletalMesh)
+	{
+		FVector SkeletalLocation = AssassinSkeletalMesh->GetComponentLocation();
+		return SkeletalLocation;
+	}
+	return FVector();
+}
+
+FRotator AEnemy::GetRotationWarpTargetAssassin()
+{
+	if (AssassinSkeletalMesh) 
+	{
+	FRotator SkeletalRotation = AssassinSkeletalMesh->GetComponentRotation();
+	return SkeletalRotation;
+	}
+	return FRotator();
 }
 
 

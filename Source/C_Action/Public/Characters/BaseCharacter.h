@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterfaces.h"
+#include "Interfaces/AssassinInterface.h"
 #include "Components/AttributeComponent.h"
 #include "Characters/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
@@ -14,7 +15,7 @@ class UAnimMontage;
 class UAttributeComponent;
 UCLASS()
 
-class C_ACTION_API ABaseCharacter : public ACharacter,public IHitInterfaces
+class C_ACTION_API ABaseCharacter : public ACharacter,public IHitInterfaces , public IAssassinInterface
 {
 	GENERATED_BODY()
 
@@ -34,6 +35,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Attack();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)override;
+	virtual void Assassinated_Implementation(const FVector& ImpactPoint, AActor* Hitter)override;
 	virtual bool CanAttack();
 	bool IsAlive();
 
@@ -97,7 +99,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* DeathMontage;
 
-	
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+		UAnimMontage* AssassinatedMontage;
+
+
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* HitReactMontage;
@@ -108,9 +113,12 @@ protected:
 	UPROPERTY(Editanywhere, Category = "Combat")
 		TArray<FName> DeathMontageSelections;
 
+	/*CombatWarp*/
 	UFUNCTION(BlueprintCallable)
 		FVector GetTranslationWarpTarget();
 
 	UFUNCTION(BlueprintCallable)
 		FVector GetRotationWarpTarget();
+
+
 };

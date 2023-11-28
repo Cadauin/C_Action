@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "C_ActionCharacter.h"
+#include "Enemy/Enemy.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -20,6 +21,7 @@
 #include "Items/Treasure.h"
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AC_ActionCharacter
@@ -73,7 +75,7 @@ AC_ActionCharacter::AC_ActionCharacter()
 	Eyebrows->SetupAttachment(GetMesh());
 	Eyebrows->AttachmentName = FString("head");
 
-
+	AssassinTarget = NULL;
 }
 
 float AC_ActionCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -279,27 +281,90 @@ void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 
 void AC_ActionCharacter::Attacked(const FInputActionValue& value)
 {
+	FVector StartLocation = GetActorLocation();
+	FVector ForwardVector =GetActorForwardVector();
+	FVector EndLocation = StartLocation + (ForwardVector*AssassinDistance);
+	FHitResult HitResult;
+	ETraceTypeQuery TraceChannel= UEngineTypes::ConvertToTraceType(ECC_Visibility);;
+	bool bHit = UKismetSystemLibrary::LineTraceSingle(
+		this,
+		StartLocation,
+		EndLocation, 
+		TraceChannel,
+		false, 
+		TArray<AActor*>(),
+		EDrawDebugTrace::None,
+		HitResult,
+		true);
 	if (CanAttack())
-	{
+	{	//Can Assassin
+		if (bHit&&HitResult.GetActor()) {
+			
+			AActor* HitActor = HitResult.GetActor();
+			if (HitActor&&HitActor->ActorHasTag("Enemy"))
+			{
+				AEnemy* HitEnemy = Cast<AEnemy>(HitActor);
+				IAssassinInterface* EnemyInterface = Cast<IAssassinInterface>(HitActor);
+				if (EnemyInterface&&HitEnemy->EnemyType == EEnemyType::EET_Human && HitEnemy->EnemyState == EEenemyState::EES_Patrolling&&ActionState==EActionState::EAS_Unoccupied&&AssassinBack(*HitActor))
+				{
+					EnemyInterface->Execute_Assassinated(HitResult.GetActor(), StartLocation, GetOwner());
+					ActionState = EActionState::EAS_Assassination;
+					AssassinTarget=HitEnemy;
+					 AssassinLocation=HitEnemy->GetTranslationWarpTargetAssassin();
+					 AssassinRotation=HitEnemy->GetRotationWarpTargetAssassin();
+
+					PlayMontageSection(AssassinatedMontage,FName("Assassin"));
+					SetCollisionIgnore();
+				}
+				else
+				{
+					PlayAttackMontage();
+					ActionState = EActionState::EAS_Attacking;
+				}
+			}
+			else
+			{
+				PlayAttackMontage();
+				ActionState = EActionState::EAS_Attacking;
+			}
+		}
+		else
+		{
 		PlayAttackMontage();
 		ActionState = EActionState::EAS_Attacking;
+		}
+
 	}
 	
 }
 
 void AC_ActionCharacter::Dodged(const FInputActionValue& value)
 {
+	
 	if (IsOccupied()||!HasEnoughStamina()) { return; }
 
 	PlayMontageSection(DodgeMontage, FName("Dodge"));
 	ActionState = EActionState::EAS_Dodge;
-
+	SetCollisionIgnore();
 	if (Attributes&&SlashOverlay)
 	{
 		Attributes->UseStamina(Attributes->GetDodgeCost());
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
 
+}
+
+void AC_ActionCharacter::SetCollisionIgnore()
+{	
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Ignore);
+	if (EquippedWeapon)
+	{
+		UStaticMeshComponent* WeaponMesh = EquippedWeapon->FindComponentByClass<UStaticMeshComponent>();
+		if (WeaponMesh)
+		{
+			WeaponMesh->SetVisibility(false);
+		}
+	}
 }
 
 bool AC_ActionCharacter::HasEnoughStamina()
@@ -385,6 +450,20 @@ void AC_ActionCharacter::AttachWeaponToHand()
 	}
 }
 
+bool AC_ActionCharacter::AssassinBack(AActor& Actor)
+{
+
+	const FRotator SlashRotation = GetActorRotation();
+	const FRotator EnemyRotation = Actor.GetActorRotation();
+
+	const float ZDiff = FMath::Abs(SlashRotation.Yaw - EnemyRotation.Yaw);
+	if (ZDiff <= 45.f && ZDiff >= 0.f)
+	{
+		return true;
+	}
+	return false ;
+}
+
 void AC_ActionCharacter::FinishEquipping()
 {
 	ActionState = EActionState::EAS_Unoccupied;
@@ -398,8 +477,30 @@ void AC_ActionCharacter::HitReactEnd()
 void AC_ActionCharacter::DodgeEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-
+	ResetMeshCollision();
+	if (EquippedWeapon) 
+	{
+		UStaticMeshComponent* WeaponMesh = EquippedWeapon->FindComponentByClass<UStaticMeshComponent>();
+	if (WeaponMesh) 
+		{
+		WeaponMesh->SetVisibility(true);
+		}
+	}
+	
 }
+
+void AC_ActionCharacter::ResetMeshCollision()
+{
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+}
+
+void AC_ActionCharacter::AssassinEnd()
+{
+	AssassinTarget = NULL;
+	ActionState = EActionState::EAS_Unoccupied;
+	ResetMeshCollision();
+}
+
 
 
 
