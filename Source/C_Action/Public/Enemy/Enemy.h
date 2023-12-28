@@ -176,5 +176,5 @@ public:
 
 	virtual void Destroyed()override;
 
-
+	float GetHp();
 };

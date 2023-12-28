@@ -8,6 +8,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/WidgetComponent.h"
 // Sets default values
 AItem::AItem()
 {
@@ -21,12 +22,59 @@ AItem::AItem()
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
-
+	Sphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel3, ECollisionResponse::ECR_Overlap);
+	
 	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmberEffect"));
 	ItemEffect->SetupAttachment(GetRootComponent());
+
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponent"));
+	WidgetComponent->SetupAttachment(GetRootComponent());
+
+
 }
 
 
+
+
+
+void AItem::SetItemDetails(FItemDetails NewDetails)
+{
+	this->ID = NewDetails.ID;
+	this->Num = NewDetails.Num;
+	this->ItemName = NewDetails.ItemName;
+	this->ItemDescribe = NewDetails.ItemDescribe;
+	this->ItemIcon = NewDetails.ItemIcon;
+	ItemMesh->SetStaticMesh(NewDetails.Mesh);
+}
+
+FItemDetails AItem::GetItemDetails()
+{
+	FItemDetails SelfDetails;
+
+	SelfDetails.ID = this->ID;
+	SelfDetails.Num = this->Num;
+	SelfDetails.ItemName = this->ItemName;
+	SelfDetails.ItemDescribe = this->ItemDescribe;
+	SelfDetails.ItemIcon = this->ItemIcon;
+	SelfDetails.Mesh = ItemMesh->GetStaticMesh();
+
+	return SelfDetails;
+}
+
+
+
+
+
+
+void AItem::SetWidgetVisibility(bool NewValue)
+{
+	WidgetComponent->SetVisibility(NewValue);
+}
+
+UWidgetComponent* AItem::GetWidgetComponet()
+{
+	return WidgetComponent;
+}
 
 // Called when the game starts or when spawned
 void AItem::BeginPlay()
@@ -34,7 +82,6 @@ void AItem::BeginPlay()
 	Super::BeginPlay();
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
-	
 }
 void AItem::SpawnPickUpsystem()
 {

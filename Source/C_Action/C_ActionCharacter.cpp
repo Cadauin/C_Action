@@ -13,18 +13,18 @@
 #include "EnhancedInputSubsystems.h"
 #include "GroomComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Components/InventoryComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
 #include "HUD/SlashHUD.h"
 #include "HUD/SlashOverlay.h"
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
-#include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
-//////////////////////////////////////////////////////////////////////////
-// AC_ActionCharacter
 
 AC_ActionCharacter::AC_ActionCharacter()
 {
@@ -75,7 +75,13 @@ AC_ActionCharacter::AC_ActionCharacter()
 	Eyebrows->SetupAttachment(GetMesh());
 	Eyebrows->AttachmentName = FString("head");
 
-	AssassinTarget = NULL;
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>("InventoryWidgetComponent");
+
+	WidgetComponent->SetupAttachment(CameraBoom);
+	WidgetComponent->SetVisibility(false);
+
+	AssassinTarget = nullptr;
 }
 
 float AC_ActionCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -130,6 +136,14 @@ void AC_ActionCharacter::SetHealthHUD()
 	}
 }
 
+void AC_ActionCharacter::PickUpItem(AItem* Item)
+{
+	if (InventoryComponent && WidgetComponent)
+	{
+		InventoryComponent->PickUp(Item);
+	}
+}
+
 void AC_ActionCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -145,7 +159,10 @@ void AC_ActionCharacter::BeginPlay()
 	}
 	Tags.Add(FName("EngageableTarget"));
 
+	InventoryComponent->Init();
+	
 	InitializeSlashOverlay();
+
 
 }
 
@@ -156,7 +173,48 @@ void AC_ActionCharacter::Tick(float DeltaTime)
 		Attributes->RegenStamina(DeltaTime);
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+
+	FVector StartLocation = GetActorLocation();
+	FVector ForwardVector = GetActorForwardVector();
+	FVector EndLocation = StartLocation + (ForwardVector * AssassinDistance);
+	FHitResult HitResult;
+	ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);;
+	bool bHit = UKismetSystemLibrary::LineTraceSingle(
+		this,
+		StartLocation,
+		EndLocation,
+		TraceChannel,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::None,
+		HitResult,
+		true);
+	IsCameraForwardHaveSomething = bHit;
+	AssassinHitResult = HitResult;
+
+	if (Controller != nullptr && IsCameraLock && CameraTarget != nullptr)
+	{
+		FVector TargetLocation = CameraTarget->GetActorLocation();
+
+		FRotator ActorControllerRotator = Controller->GetControlRotation();
+
+		FVector Distance = GetActorLocation() - (CameraTarget->GetActorLocation());
+		FRotator TargetRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), FVector(TargetLocation.X, TargetLocation.Y, TargetLocation.Z - 200.f));
+		FRotator RinterpRotator = UKismetMathLibrary::RInterpTo(ActorControllerRotator, TargetRotator, GetWorld()->GetDeltaSeconds(), 5.f);
+
+		Controller->SetControlRotation(FRotator(RinterpRotator.Pitch, RinterpRotator.Yaw, ActorControllerRotator.Roll));
+
+		if (Distance.Size() >= CameraLockDistance)
+		{
+			IsCameraLock = false;
+		}
+	}
+	if (CameraTarget)
+	{
+		if (CameraTarget->GetHp() <= 0) { CameraTarget = nullptr; }
+	}
 }
+
 
 void AC_ActionCharacter::InitializeSlashOverlay()
 {
@@ -183,20 +241,26 @@ void AC_ActionCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
-		//Jumping
+
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AC_ActionCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AC_ActionCharacter::Move);
 
-		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AC_ActionCharacter::Look);
 		
-		EnhancedInputComponent->BindAction(Equip,ETriggerEvent::Triggered,this,&AC_ActionCharacter::EKeyPressed);
+		EnhancedInputComponent->BindAction(Equip,ETriggerEvent::Triggered,this,&AC_ActionCharacter::EquipKey);
 
 		EnhancedInputComponent->BindAction(Attack, ETriggerEvent::Triggered, this, &AC_ActionCharacter::Attacked);
+
 		EnhancedInputComponent->BindAction(Dodge,ETriggerEvent::Triggered,this,&AC_ActionCharacter::Dodged);
+
+		EnhancedInputComponent->BindAction(AssassinKey, ETriggerEvent::Triggered, this, &AC_ActionCharacter::Assassin);
+
+		EnhancedInputComponent->BindAction(InventoryKey, ETriggerEvent::Triggered, InventoryComponent, &UInventoryComponent::ToggleInventoryWidget);
+
+		EnhancedInputComponent->BindAction(CameraLockKey, ETriggerEvent::Triggered, this, &AC_ActionCharacter::CameraLock);
+
 	}
 
 }
@@ -243,18 +307,16 @@ void AC_ActionCharacter::Look(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (Controller != nullptr&&!IsCameraLock)
 	{
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+
 }
 
-
-
-
-void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
+void AC_ActionCharacter::EquipKey(const FInputActionValue& Value)
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverLappingItem);
 	if (OverlappingWeapon)
@@ -281,61 +343,42 @@ void AC_ActionCharacter::EKeyPressed(const FInputActionValue& Value)
 
 void AC_ActionCharacter::Attacked(const FInputActionValue& value)
 {
-	FVector StartLocation = GetActorLocation();
-	FVector ForwardVector =GetActorForwardVector();
-	FVector EndLocation = StartLocation + (ForwardVector*AssassinDistance);
-	FHitResult HitResult;
-	ETraceTypeQuery TraceChannel= UEngineTypes::ConvertToTraceType(ECC_Visibility);;
-	bool bHit = UKismetSystemLibrary::LineTraceSingle(
-		this,
-		StartLocation,
-		EndLocation, 
-		TraceChannel,
-		false, 
-		TArray<AActor*>(),
-		EDrawDebugTrace::None,
-		HitResult,
-		true);
 	if (CanAttack())
-	{	//Can Assassin
-		if (bHit&&HitResult.GetActor()) {
-			
-			AActor* HitActor = HitResult.GetActor();
-			if (HitActor&&HitActor->ActorHasTag("Enemy"))
-			{
-				AEnemy* HitEnemy = Cast<AEnemy>(HitActor);
-				IAssassinInterface* EnemyInterface = Cast<IAssassinInterface>(HitActor);
-				if (EnemyInterface&&HitEnemy->EnemyType == EEnemyType::EET_Human && HitEnemy->EnemyState == EEenemyState::EES_Patrolling&&ActionState==EActionState::EAS_Unoccupied&&AssassinBack(*HitActor))
-				{
-					EnemyInterface->Execute_Assassinated(HitResult.GetActor(), StartLocation, GetOwner());
-					ActionState = EActionState::EAS_Assassination;
-					AssassinTarget=HitEnemy;
-					 AssassinLocation=HitEnemy->GetTranslationWarpTargetAssassin();
-					 AssassinRotation=HitEnemy->GetRotationWarpTargetAssassin();
-
-					PlayMontageSection(AssassinatedMontage,FName("Assassin"));
-					SetCollisionIgnore();
-				}
-				else
-				{
-					PlayAttackMontage();
-					ActionState = EActionState::EAS_Attacking;
-				}
-			}
-			else
-			{
-				PlayAttackMontage();
-				ActionState = EActionState::EAS_Attacking;
-			}
-		}
-		else
-		{
+	{
 		PlayAttackMontage();
 		ActionState = EActionState::EAS_Attacking;
-		}
-
 	}
-	
+}
+
+void AC_ActionCharacter::Assassin(const FInputActionValue& value)
+{
+
+	if (IsCameraForwardHaveSomething && AssassinHitResult.GetActor()) {
+
+		AActor* HitActor = AssassinHitResult.GetActor();
+		if (HitActor && HitActor->ActorHasTag("Enemy"))
+		{
+			AEnemy* HitEnemy = Cast<AEnemy>(HitActor);
+			IAssassinInterface* EnemyInterface = Cast<IAssassinInterface>(HitActor);
+			if (EnemyInterface && HitEnemy->EnemyType == EEnemyType::EET_Human && HitEnemy->EnemyState == EEenemyState::EES_Patrolling && ActionState == EActionState::EAS_Unoccupied && AssassinBack(*HitActor))
+			{
+				EnemyInterface->Execute_Assassinated(AssassinHitResult.GetActor(), GetActorLocation(), GetOwner());
+				ActionState = EActionState::EAS_Assassination;
+				AssassinTarget = HitEnemy;
+				AssassinLocation = HitEnemy->GetTranslationWarpTargetAssassin();
+				AssassinRotation = HitEnemy->GetRotationWarpTargetAssassin();
+
+				PlayMontageSection(AssassinatedMontage, FName("Assassin"));
+				SetCollisionIgnore();
+			}
+		}
+	}
+
+}
+
+void AC_ActionCharacter::BackPack(const FInputActionValue& value)
+{
+
 }
 
 void AC_ActionCharacter::Dodged(const FInputActionValue& value)
@@ -352,6 +395,38 @@ void AC_ActionCharacter::Dodged(const FInputActionValue& value)
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
 
+}
+
+void AC_ActionCharacter::CameraLock(const FInputActionValue& Value)
+{
+
+	
+	FVector ActorLocation = GetActorLocation();
+	FRotator ActorRotaion = GetActorRotation();
+	FVector ActorForwardVector = ActorRotaion.Vector();
+	FVector StartCameraLockDistance = ActorLocation + ActorForwardVector*CameraLockDistance;
+
+
+	FRotator CameraRotation = FollowCamera->GetComponentRotation();
+	FVector CameraForwardVector = CameraRotation.Vector();
+
+	FVector CameraLocationEnd = ActorLocation +CameraForwardVector* CameraLockDistance;
+
+	FHitResult SphereHitResult;
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+
+	bool Sphere = UKismetSystemLibrary::SphereTraceSingle(this, StartCameraLockDistance, CameraLocationEnd,CameraLockDistance, CameraTracetype01, false,
+		ActorsToIgnore,EDrawDebugTrace::None, SphereHitResult,false,FLinearColor::Red );
+
+	CameraHitResult = SphereHitResult;
+	IsCameraLockBox = Sphere;
+	if (IsCameraLockBox&& CameraHitResult.GetActor()->ActorHasTag("Enemy"))
+	{
+		AActor* HitActor = CameraHitResult.GetActor();
+		CameraTarget = Cast<AEnemy>(HitActor);
+		IsCameraLock = !IsCameraLock;
+	}
 }
 
 void AC_ActionCharacter::SetCollisionIgnore()

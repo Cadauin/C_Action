@@ -11,7 +11,6 @@
 #include "C_ActionCharacter.generated.h"
 
 
-
 	class USpringArmComponent;
 	class UCameraComponent;
 	class UInputMappingContext;
@@ -19,11 +18,12 @@
 	class UGroomComponent;
 	class AItem;
 	class ATreasure;
+	class AEnmey;
 	class ASoul;
 	class UAnimMontage;
 	class USlashOverlay;
-
-
+	class UWidgetComponent;
+	class UInventoryComponent;
 UCLASS(config=Game)
 class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 {
@@ -62,6 +62,17 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
 		UInputAction* Dodge;
 
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* AssassinKey;
+
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* InventoryKey;
+
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* CameraLockKey;
+
+
+
 	UPROPERTY(VisibleAnyWhere, Category = "Groom")
 		UGroomComponent* Hair;
 
@@ -88,7 +99,7 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 	UPROPERTY(Editanywhere, Category = "Assassin")
 		float AssassinDistance =150.f;
 
-
+	
 
 
 public:
@@ -105,6 +116,7 @@ public:
 	virtual void AddGold(ATreasure* Treasure)override;
 
 	/*Assassin*/
+
 	UPROPERTY(BlueprintReadOnly)
 	class AEnemy* AssassinTarget;
 
@@ -112,6 +124,8 @@ public:
 	FVector AssassinLocation;
 	UPROPERTY(BlueprintReadOnly)
 	FRotator AssassinRotation;
+	
+	FHitResult AssassinHitResult;
 protected:
 
 	virtual void BeginPlay();
@@ -123,11 +137,17 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 			
-	void EKeyPressed(const FInputActionValue& Value);
+	void EquipKey(const FInputActionValue& Value);
 
 	void Attacked(const FInputActionValue& value) ;
 	
 	void Dodged(const FInputActionValue& value);
+
+	void Assassin(const FInputActionValue& value);
+
+	void BackPack(const FInputActionValue& value);
+
+	void CameraLock(const FInputActionValue& value);
 
 	void SetCollisionIgnore();
 
@@ -158,6 +178,8 @@ protected:
 	bool Canarm();
 	void Arm();
 
+	
+
 	bool AssassinBack(AActor& Actor);
 
 	UFUNCTION(BlueprintCallable)
@@ -181,8 +203,41 @@ protected:
 		void AssassinEnd();
 
 	
-	// To add mapping context
-	
+	/*
+	Camera
+	*/
+	FHitResult CameraHitResult;
+
+	bool IsCameraLock=false;
+
+	bool IsCameraForwardHaveSomething = false;
+
+	bool IsCameraLockBox = false;
+
+	UPROPERTY(Editanywhere,category="Camera")
+	float CameraHeight = 50.0f;
+
+	UPROPERTY(Editanywhere, category = "Camera")
+	float CameraDistance = 100.f;
+
+	UPROPERTY(Editanywhere, category = "Camera")
+	float CameraRotationSpeed = 5.0f;
+
+	UPROPERTY(Editanywhere, category = "Camera")
+	float CameraSmoothness = 0.5f;
+
+	UPROPERTY(EditAnyWhere,Category="Camera")
+	FVector CameraLockBox = FVector(1000.f,50.f ,50.f );
+
+	UPROPERTY(EditAnyWhere, category = "Camera")
+		float CameraLockDistance = 1000.f;
+
+	UPROPERTY(Editanywhere,category="Camera")
+	AEnemy* CameraTarget=NULL;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		TEnumAsByte<ETraceTypeQuery> CameraTracetype01;
+
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquip;
 
@@ -194,6 +249,9 @@ private:
 	UPROPERTY()
 		USlashOverlay* SlashOverlay;
 	void SetHealthHUD();
+
+
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -201,5 +259,19 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+
+/*
+Inventory
+*/
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+		UInventoryComponent* InventoryComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+		UWidgetComponent* WidgetComponent;
+
+	FORCEINLINE UWidgetComponent* GetWidgetComponent() { return WidgetComponent; };
+
+	virtual void PickUpItem(AItem* Item) override;
+
 };
 

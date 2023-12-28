@@ -9,6 +9,21 @@
 class USphereComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
+class UWidgetComponent;
+
+struct FItemDetails {
+
+	int32 ID=-1;
+	int32 Num = 0;
+
+	FText ItemName= FText::FromString("None");
+	FText ItemType = FText::FromString("None");
+	FText ItemDescribe =FText::FromString("None");
+
+	UTexture2D* ItemIcon=nullptr;
+	UStaticMesh* Mesh = nullptr;
+};
+
 enum class EItemState :uint8 {
 	EIS_Hovering,
 	EIS_Equiped
@@ -40,6 +55,14 @@ public:
 
 	UPROPERTY(Editanywhere, category = "Niagara")
 		UNiagaraComponent* ItemEffect;
+
+	/*
+	Inventory
+	*/
+	UPROPERTY(Editanywhere, category = "Item")
+		UWidgetComponent* WidgetComponent;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,6 +86,37 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exposed | Sine Parameters")
 		float TimeConstant = 5.f;
+
+	/*
+	Inventory
+	*/
+	
+	UPROPERTY(Editanywhere, BlueprintReadWrite, Category = "Item")
+		int32 ID;
+	UPROPERTY(Editanywhere, BlueprintReadWrite, Category = "Item")
+		int32 Num;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+		FText ItemName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+		FText ItemType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+		FText ItemDescribe;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+		UTexture2D* ItemIcon;
+
+
+	
+
+public:
+	void SetItemDetails(FItemDetails NewDetails);
+	FItemDetails GetItemDetails();
+	void SetWidgetVisibility(bool NewValue);
+	UStaticMeshComponent* GetMeshComponent() { return ItemMesh; };
+	UWidgetComponent* GetWidgetComponet();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Exposed | Info")

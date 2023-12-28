@@ -52,3 +52,4 @@ enum class EEnemyType :uint8
 	EET_Monster UMETA(Displayname="Monster")
 
 };
+

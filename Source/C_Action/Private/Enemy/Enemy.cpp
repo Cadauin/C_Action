@@ -405,6 +405,12 @@ void AEnemy::Destroyed()
 	}
 }
 
+float AEnemy::GetHp()
+{
+	
+	return Attributes->GetHealth();;
+}
+
 void AEnemy::HandleDamage(float DamageAmount)
 {
 	Super::HandleDamage(DamageAmount);
