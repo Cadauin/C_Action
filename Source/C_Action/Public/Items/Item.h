@@ -22,6 +22,7 @@ struct FItemDetails {
 
 	UTexture2D* ItemIcon=nullptr;
 	UStaticMesh* Mesh = nullptr;
+
 };
 
 enum class EItemState :uint8 {

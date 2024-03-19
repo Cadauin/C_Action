@@ -21,6 +21,8 @@ public:
 	void UseStamina(float StaminaCost);
 	void RegenStamina(float DeltaTime);
 
+	void Resetstate();
+
 	float GetHealthPercent();
 	float GetStaminaPercent();
 	bool IsAlive();

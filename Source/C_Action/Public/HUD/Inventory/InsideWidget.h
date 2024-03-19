@@ -14,6 +14,7 @@ class UImage;
 class UButton;
 struct FItemDetails;
 class UInventoryWidget;
+
 UCLASS()
 class C_ACTION_API UInsideWidget : public UUserWidget
 {

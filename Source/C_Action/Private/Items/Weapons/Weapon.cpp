@@ -28,6 +28,16 @@ AWeapon::AWeapon()
 
 
 }
+FName AWeapon::GetWeaponEquipName()
+{
+	FName TempName(*WeaponEquipName);
+	return TempName;
+}
+FName AWeapon::GetWeaponStorageName()
+{
+	FName TempName(*WeaponStorageName);
+	return TempName;
+}
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
@@ -94,6 +104,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		{
 			return;
 		}
+
 		UGameplayStatics::ApplyDamage(
 			BoxHit.GetActor(),
 			Damage,
@@ -101,6 +112,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 			this,
 			UDamageType::StaticClass()
 		);
+
 		ExecuteGetHit(BoxHit);
 		CreatFields(BoxHit.ImpactPoint);
 	}

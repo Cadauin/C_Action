@@ -6,7 +6,9 @@
 #include "Items/Weapons/Weapon.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "HUD/LockPointComponent.h"
 #include "AIController.h"
+#include "Components/WidgetComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Items/Soul.h"
 
@@ -14,7 +16,7 @@
 // Sets default values
 AEnemy::AEnemy()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
@@ -34,12 +36,17 @@ AEnemy::AEnemy()
 	PawnSensing->SightRadius = 4000.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 
-	AssassinSkeletalMesh=CreateAbstractDefaultSubobject<USkeletalMeshComponent>(TEXT("AssassinSkeletalMesh"));
+	AssassinSkeletalMesh = CreateAbstractDefaultSubobject<USkeletalMeshComponent>(TEXT("AssassinSkeletalMesh"));
 	AssassinSkeletalMesh->SetupAttachment(GetRootComponent());
+
+
+	LockPointWidget = CreateDefaultSubobject<ULockPointComponent>(TEXT("LockPoint"));
+	LockPointWidget->SetupAttachment(GetRootComponent());
+	LockPointWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	LockPointWidget->SetRelativeLocation(FVector(0.f, 2.f, 0.f));
 }
 
 
-// Called when the game starts or when spawned
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
@@ -57,7 +64,7 @@ void AEnemy::InitializeEnemy()
 	
 	MoveToTarget(PatrolTarget);
 	HideHealthBar();
-	
+	HideWhitePoint();
 	SpawnDefaultWeapon();
 }
 
@@ -386,7 +393,7 @@ void AEnemy::Attack()
 	if (CombatTarget == nullptr) { return; }
 	EnemyState = EEenemyState::EES_Engaged;
 	
-	PlayAttackMontage();
+	PlayAttackMontage(AnimMontageNum);
 }
 
 
@@ -408,7 +415,7 @@ void AEnemy::Destroyed()
 float AEnemy::GetHp()
 {
 	
-	return Attributes->GetHealth();;
+	return Attributes->GetHealth();
 }
 
 void AEnemy::HandleDamage(float DamageAmount)
@@ -438,6 +445,30 @@ FRotator AEnemy::GetRotationWarpTargetAssassin()
 	return SkeletalRotation;
 	}
 	return FRotator();
+}
+
+void AEnemy::ShowWhitePoint()
+{
+	if (LockPointWidget)
+	{
+		if (LockPointWidget->IsVisible())
+		{
+			LockPointWidget->SetVisibility(false);
+		}
+		else
+		{
+			LockPointWidget->SetVisibility(true);
+		}
+	}
+}
+
+void AEnemy::HideWhitePoint()
+{
+	if (LockPointWidget)
+	{ 
+		LockPointWidget->SetVisibility(false);
+	}
+	
 }
 
 

@@ -24,6 +24,9 @@
 	class USlashOverlay;
 	class UWidgetComponent;
 	class UInventoryComponent;
+	class UReSpawnPointComponent;
+	class UPointBackgroundWidget;
+	class UNiagaraComponent;
 UCLASS(config=Game)
 class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 {
@@ -71,13 +74,21 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
 		UInputAction* CameraLockKey;
 
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* RespawnPointKey;
 
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = Input, meta = (AllowprivateAccess = "true"))
+		UInputAction* DashKey;
 
 	UPROPERTY(VisibleAnyWhere, Category = "Groom")
 		UGroomComponent* Hair;
 
 	UPROPERTY(VisibleAnyWhere,Category="Groom")
 		UGroomComponent* Eyebrows;
+
+	UPROPERTY(VisibleAnyWhere, Category = "Groom")
+		UNiagaraComponent* DashNiagara;
+
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverLappingItem;
 
@@ -92,6 +103,8 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 		UAnimMontage* DodgeMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+		UAnimMontage* DashMontage;
 
 	/*
 	Assassin
@@ -99,7 +112,6 @@ class AC_ActionCharacter : public ABaseCharacter, public IPickUpInterface
 	UPROPERTY(Editanywhere, Category = "Assassin")
 		float AssassinDistance =150.f;
 
-	
 
 
 public:
@@ -131,6 +143,7 @@ protected:
 	virtual void BeginPlay();
 	
 	virtual void Tick(float DeltaTime)override;
+	void CameraFollow();
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -145,18 +158,24 @@ protected:
 
 	void Assassin(const FInputActionValue& value);
 
-	void BackPack(const FInputActionValue& value);
-
 	void CameraLock(const FInputActionValue& value);
 
+	void Dash(const FInputActionValue& value);
+
+	void SwapWeapon();
+
+	UFUNCTION(BlueprintCallable)
 	void SetCollisionIgnore();
 
-	bool HasEnoughStamina();
+	bool HasEnoughStamina(float Cost);
 
 	bool IsOccupied();
 
 	void EquipWeapon(AWeapon* Weapon);
 
+
+
+	ECharacterState SetEquipWeaponState(AWeapon* Weapon);
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -197,12 +216,20 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void DodgeEnd();
 
+	UFUNCTION(BlueprintCallable)
 	void ResetMeshCollision();
 
 	UFUNCTION(BlueprintCallable)
 		void AssassinEnd();
 
-	
+	UFUNCTION(BlueprintCallable)
+		void CallStaff();
+
+	UFUNCTION(BlueprintCallable)
+		void EnableCollision();
+
+	UFUNCTION(BlueprintCallable)
+		void DisableCollision(); 
 	/*
 	Camera
 	*/
@@ -213,7 +240,7 @@ protected:
 	bool IsCameraForwardHaveSomething = false;
 
 	bool IsCameraLockBox = false;
-
+	
 	UPROPERTY(Editanywhere,category="Camera")
 	float CameraHeight = 50.0f;
 
@@ -230,14 +257,22 @@ protected:
 	FVector CameraLockBox = FVector(1000.f,50.f ,50.f );
 
 	UPROPERTY(EditAnyWhere, category = "Camera")
-		float CameraLockDistance = 1000.f;
+		float CameraLockDistance = 2000.f;
 
-	UPROPERTY(Editanywhere,category="Camera")
-	AEnemy* CameraTarget=NULL;
+	UPROPERTY(Editanywhere, category = "Camera")
+		AActor* ActorTarget = nullptr;
+
+	UPROPERTY(Editanywhere, category = "Camera")
+		AEnemy* CameraTarget = nullptr;
+
+	UPROPERTY(Editanywhere, category = "Camera")
+	class ABossCharacter* CameraBossTarget = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		TEnumAsByte<ETraceTypeQuery> CameraTracetype01;
 
+	UPROPERTY(EditAnywhere, Category = "Dash")
+		float DashDistance=3000.f;
 private:
 	ECharacterState CharacterState = ECharacterState::ECS_UnEquip;
 
@@ -250,7 +285,10 @@ private:
 		USlashOverlay* SlashOverlay;
 	void SetHealthHUD();
 
+	TArray<AWeapon*> WeaponClass;
+	int32 NowWeaponNum=0;
 
+	
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -260,6 +298,9 @@ public:
 
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 
+	FORCEINLINE bool GetLockbool() const { return IsCameraLock; }
+
+	float GetDirection();
 /*
 Inventory
 */
@@ -271,7 +312,15 @@ Inventory
 
 	FORCEINLINE UWidgetComponent* GetWidgetComponent() { return WidgetComponent; };
 
-	virtual void PickUpItem(AItem* Item) override;
+	void PickUpItem(AItem* Item);
 
+
+	UPROPERTY(Editanywhere, Category = "Respawn")
+		UReSpawnPointComponent* RespawnPointComponent;
+
+	UPROPERTY(Editanywhere)
+		UWidgetComponent* PointBackgroundWidget;
+
+	FORCEINLINE UWidgetComponent* GetRespawnWidgetComponent() { return PointBackgroundWidget; };
 };
 

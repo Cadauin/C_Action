@@ -25,6 +25,7 @@ void UInventoryWidget::Init(TArray<FInsideItem>& InsideItemBox)
 				int j = i / 4;
 				GridSlot->SetColumn(j);
 		}
+
 	
 }
 
@@ -48,9 +49,7 @@ int UInventoryWidget::GetGridPanelIndex()
 	return GridPanel->GetChildrenCount();
 }
 
-void UInventoryWidget::UseItem()
-{
-}
+
 
 
 

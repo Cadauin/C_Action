@@ -29,7 +29,13 @@ public:
 		float GroundSpeed;
 
 	UPROPERTY(BlueprintReadOnly, category = "Movement")
+		float Direction;
+
+	UPROPERTY(BlueprintReadOnly, category = "Movement")
 		bool IsFalling;
+
+	UPROPERTY(BlueprintReadOnly, category = "Movement")
+		bool IsLockTarget;
 
 	UPROPERTY(BlueprintReadOnly,category="Movement")
 	ECharacterState CharacterState;

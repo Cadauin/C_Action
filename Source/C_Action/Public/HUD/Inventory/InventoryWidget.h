@@ -26,7 +26,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSubclassOf<UInsideWidget> UInsideItemWidgetClass;
 
-		void UseItem();
 
 private:
 	UPROPERTY(meta = (BindWidget))

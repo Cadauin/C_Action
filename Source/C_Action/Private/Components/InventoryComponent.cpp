@@ -20,9 +20,6 @@ void UInventoryComponent::Init()
 	InventoryWidget = Cast<UInventoryWidget>(Cast<AC_ActionCharacter>(GetOwner())->GetWidgetComponent()->GetWidget());
 	InsideItemBox.SetNum(InsideItemBoxCount, false);
 	InventoryWidget->Init(InsideItemBox);
-
-	
-	
 }
 
 
@@ -41,6 +38,14 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
+
+void UInventoryComponent::Use(AItem* Item)
+{
+}
+
+
+
+
 
 void UInventoryComponent::ToggleInventoryWidget()
 {
@@ -70,12 +75,12 @@ void UInventoryComponent::PickUp(AItem* Item)
 
 	for (int i = 0; i < ItemArray.Num(); i++)
 	{
-		if (ItemArray[i]->GetItemDetails().ID == ItemDetail.ID)
+		if (InsideItemBox[i].ItemDetails.ID == ItemDetail.ID)
 		{
 			FItemDetails Temp;
 			Temp = InsideItemBox[i].ItemDetails;
 			Temp.Num+=ItemDetail.Num ;
-			InsideItemBox[i].ItemDetails = Temp;
+			InsideItemBox[i].ItemDetails=Temp;
 			InventoryWidget->RefreshInsideItemBox(InsideItemBox);
 			return;
 		}

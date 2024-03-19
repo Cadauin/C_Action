@@ -138,3 +138,4 @@ float AItem::TransformedCos()
 	return Amplitude * FMath::Cos(RunningTime * TimeConstant);
 }
 
+

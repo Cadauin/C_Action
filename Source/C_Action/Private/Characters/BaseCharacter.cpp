@@ -89,9 +89,9 @@ void ABaseCharacter::DisableCollision()
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-int32 ABaseCharacter::PlayAttackMontage()
+int32 ABaseCharacter::PlayAttackMontage(int32 i)
 {
-	return PlayRandomMontageSection(AttackMontage, AttackMontageSelections);
+	return PlayRandomMontageSection(ArrayAttackMontage[i].AttackMontage, ArrayAttackMontage[i].TarrayMontageName);
 }
 
 int32 ABaseCharacter::PlayDeathMontage()
@@ -110,7 +110,7 @@ void ABaseCharacter::StopAttackMontage()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
-		AnimInstance->Montage_Stop(0.25f, AttackMontage);
+		AnimInstance->Montage_Stop(0.25f, ArrayAttackMontage[AnimMontageNum].AttackMontage);
 	}
 }
 
@@ -147,7 +147,6 @@ void ABaseCharacter::SetWeaponCollision(ECollisionEnabled::Type CollisionEnable)
 	{
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnable);
 		EquippedWeapon->IgnoreActor.Empty();
-
 	}
 }
 
@@ -200,7 +199,7 @@ void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 
 void ABaseCharacter::HandleDamage(float DamageAmount)
 {
-	if (Attributes )
+	if (Attributes)
 	{
 		Attributes->ReceiveDamage(DamageAmount);
 	}

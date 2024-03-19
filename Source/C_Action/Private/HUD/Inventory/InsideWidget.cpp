@@ -22,7 +22,6 @@ void UInsideWidget::SetWidget(FItemDetails& Details)
 	{
 		return;
 	}
-
 	this->ItemIcon->SetBrushResourceObject(Details.ItemIcon);
 	this->ItemNum->SetText(FText::FromString(FString::Printf(TEXT("%d"), Details.Num)));
 	this->ItemButton->SetToolTipText(Details.ItemName);

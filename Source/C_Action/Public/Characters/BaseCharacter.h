@@ -13,6 +13,19 @@
 class AWeapon;
 class UAnimMontage;
 class UAttributeComponent;
+
+USTRUCT(BlueprintType)
+struct FAttackMontages
+{
+	GENERATED_BODY()
+
+		UPROPERTY(EditAnywhere, Category = "Montage")
+		UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Montage")
+		TArray<FName> TarrayMontageName;
+};
+
 UCLASS()
 
 class C_ACTION_API ABaseCharacter : public ACharacter,public IHitInterfaces , public IAssassinInterface
@@ -20,6 +33,9 @@ class C_ACTION_API ABaseCharacter : public ACharacter,public IHitInterfaces , pu
 	GENERATED_BODY()
 
 public:
+	
+	UPROPERTY(EditAnywhere, Category = "Montage")
+		TArray<FAttackMontages> ArrayAttackMontage;
 	
 	ABaseCharacter();
 
@@ -76,7 +92,7 @@ protected:
 	void SpawnParticles(const FVector& ImpactPoint);
 	void PlayMontageSection(UAnimMontage* Montage,const FName& SelectionName);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SelectionNames);
-	virtual	int32 PlayAttackMontage();
+	virtual	int32 PlayAttackMontage(int32 i);
 	virtual	int32 PlayDeathMontage();
 	void StopAttackMontage();
 	void DisableCapsule();
@@ -90,11 +106,14 @@ protected:
 	UPROPERTY(Editanywhere, category = "Combat")
 		float DeathLifeSpan = 8.f;
 
+	UPROPERTY(Editanywhere, category = "Combat")
+		float DodgeCost = 14.f;
+
+	UPROPERTY(Editanywhere, category = "Combat")
+		float MagicCost = 20.f;
+
 	UPROPERTY(VisibleAnyWhere, Category = "Weapon")
 		AWeapon* EquippedWeapon;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-		UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* DeathMontage;
@@ -103,12 +122,8 @@ protected:
 		UAnimMontage* AssassinatedMontage;
 
 
-
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* HitReactMontage;
-
-	UPROPERTY(Editanywhere, Category = "Combat")
-		TArray<FName> AttackMontageSelections;
 
 	UPROPERTY(Editanywhere, Category = "Combat")
 		TArray<FName> DeathMontageSelections;
@@ -120,5 +135,5 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		FVector GetRotationWarpTarget();
 
-
+	int32 AnimMontageNum = 0;
 };

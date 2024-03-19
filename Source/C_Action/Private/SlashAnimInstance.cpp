@@ -27,7 +27,9 @@ Super:: NativeUpdateAnimation(Deltatime);
 	if (SlashCharacterMovement)
 	{
 		GroundSpeed = UKismetMathLibrary::VSizeXY(SlashCharacterMovement->Velocity);
-
+		IsLockTarget = SlashCharacter->GetLockbool();
+		if (IsLockTarget)
+		{Direction = SlashCharacter->GetDirection();}
 		IsFalling = SlashCharacterMovement->IsFalling();
 		CharacterState = SlashCharacter->GetCharacterState();
 		ActionState = SlashCharacter->GetActionState();

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Characters/BaseCharacter.h"
-
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
@@ -12,8 +11,8 @@
 class UHealthBarComponent;
 class AAIController;
 class UPawnSensingComponent;
-
-
+class USkeletalMeshComponent;
+class ULockPointComponent;
 UCLASS()
 class C_ACTION_API AEnemy : public ABaseCharacter
 {
@@ -28,6 +27,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy")
 		EEnemyType EnemyType;
+	
+
 
 	/*
 	AssassinSkeletalMesh
@@ -40,6 +41,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		FRotator GetRotationWarpTargetAssassin();
+
+	void ShowWhitePoint();
+	void HideWhitePoint();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -54,6 +58,7 @@ protected:
 
 	UPROPERTY(Editanywhere, category = "Combat")
 		double PatrolRadius = 200.f;
+
 
 	FTimerHandle PatrolTimer;
 	void PatrolTimerFinished();
@@ -90,10 +95,13 @@ private:
 	UPROPERTY(EditAnyWhere)
 		TSubclassOf<class AWeapon> WeaponClass;
 
+	UPROPERTY(VisibleAnywhere)
+		 ULockPointComponent* LockPointWidget;
 
+	
 
 	UPROPERTY(Editanywhere, category = "Combat")
-		double CombatRadius=500.f;
+		double CombatRadius=1500.f;
 
 	UPROPERTY(EditAnyWhere, Category = "Combat")
 		double AttackRadius = 150.f;

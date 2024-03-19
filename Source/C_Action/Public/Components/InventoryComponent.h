@@ -15,6 +15,8 @@ struct FInsideItem
 	FItemDetails ItemDetails;
 	UInsideWidget* Widget = nullptr;
 };
+
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class C_ACTION_API UInventoryComponent : public UActorComponent
 {
@@ -24,10 +26,9 @@ public:
 	UInventoryComponent();
 	void Init();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void Use(AItem* Item);
 	TArray<FInsideItem>& GetInsideItemBox() { return InsideItemBox; };
 	int32 FindIndexCouldSaveItem();
-
-
 
 	void ToggleInventoryWidget();
 	void PickUp(AItem* Item);

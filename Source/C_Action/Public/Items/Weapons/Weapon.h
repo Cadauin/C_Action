@@ -9,6 +9,13 @@
 class USoundBase;
 class UBoxComponent;
 class UNiagaraComponent;
+
+UENUM(BlueprintType)
+enum class WeaponState : uint8{
+		One_Hand,
+		Two_Hand
+};
+
 /**
  * 
  */
@@ -18,8 +25,9 @@ class C_ACTION_API AWeapon : public AItem
 	GENERATED_BODY()
 
 public:
+
 	AWeapon();
-	void Equip(USceneComponent* InParent, FName InsocketName, AActor* NewOwner ,APawn* NewInstigator);
+	void Equip(USceneComponent* InParent, FName InsocketName, AActor* NewOwner ,APawn* NewInstigator) ;
 	void DeactivateEmber();
 	void DisableSphereCollision();
 	void PlayEquipSound();
@@ -27,13 +35,26 @@ public:
 
 	TArray<AActor*> IgnoreActor;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Weapon")
+	WeaponState WhatEquipWeapon = WeaponState::One_Hand;
+
+	FORCEINLINE	WeaponState GetWeaponState() const { return WhatEquipWeapon; }
+
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
+
+	FORCEINLINE float GetDamage() const { return Damage; }
+
+	FORCEINLINE int32 GetWeaponAnimNum()const { return WeaponAnim; }
+
+	FName GetWeaponEquipName();
+
+	FName GetWeaponStorageName();
 protected:
 		virtual void BeginPlay() override;
 
 
 		UFUNCTION()
-			void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 		bool ActorIsSameType(AActor* OtherActor);
 
@@ -47,6 +68,8 @@ private:
 	UPROPERTY(EditAnyWhere, Category = "Weapon Properties")
 		UBoxComponent* WeaponBox;
 
+
+
 	UPROPERTY(EditAnyWhere, Category = "Weapon Properties")
 		float Damage=20.f;
 
@@ -56,7 +79,7 @@ private:
 	UPROPERTY(EditAnyWhere)
 		USceneComponent* BoxTraceEnd;
 
-	void BoxTrace(FHitResult& BoxHit);
+	virtual void BoxTrace(FHitResult& BoxHit);
 
 	UPROPERTY(Editanywhere,category="Weapon Properties")
 	FVector BoxTraceExtent = FVector(5.f);
@@ -64,5 +87,11 @@ private:
 	UPROPERTY(Editanywhere, category = "Weapon Properties")
 		bool ShowBoxDebug = false;
 
+	UPROPERTY(Editanywhere, category = "Weapon Properties")
+		FString WeaponEquipName;
+	UPROPERTY(Editanywhere, category = "Weapon Properties")
+		FString WeaponStorageName;
+	UPROPERTY(Editanywhere, category = "Weapon Properties")
+	int32 WeaponAnim=0;
 
 };
