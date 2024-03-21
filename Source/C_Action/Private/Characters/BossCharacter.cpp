@@ -332,6 +332,7 @@ void ABossCharacter::Die_Implementation()
 	HideHealthBar();
 	ClearAroundTimer();
 	ClearBulletTimer();
+	ClearAreaTimer();
 	DisableCapsule();
 	SetLifeSpan(5.f);
 	GetCharacterMovement()->bOrientRotationToMovement = false;

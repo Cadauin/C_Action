@@ -679,7 +679,7 @@ void AC_ActionCharacter::DodgeEnd()
 	if (EquippedWeapon) 
 	{
 		UStaticMeshComponent* WeaponMesh = EquippedWeapon->FindComponentByClass<UStaticMeshComponent>();
-	if (WeaponMesh) 
+		if (WeaponMesh) 
 		{
 		WeaponMesh->SetVisibility(true);
 		}
@@ -707,6 +707,9 @@ void AC_ActionCharacter::CallStaff()
 	else if (CameraBossTarget)
 	{
 		Staff->SpellMagic(GetActorRotation(), CameraBossTarget, this);
+	}
+	else {
+		Staff->SpellMagic(GetActorRotation(), nullptr, this);
 	}
 }
 void AC_ActionCharacter::EnableCollision()
@@ -742,6 +745,7 @@ void AC_ActionCharacter::Dash(const FInputActionValue& value)
 	{
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+	SetCollisionIgnore();
 	GetMesh()->SetVisibility(false);
 	DashNiagara->SetVisibility(true);
 	DashNiagara->ActivateSystem();
